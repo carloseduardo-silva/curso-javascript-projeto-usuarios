@@ -17,7 +17,9 @@ class UserController{
             this.showCadastratePanel();
         })
 
-       /* this.formUpdateEl.addEventListener("submit", (btn)=>{
+
+        //working the submit btn after the datas edit, replacing for the new datas, recriating the HTML of the line with the new updates.
+        this.formUpdateEl.addEventListener("submit", (btn)=>{
             btn.preventDefault()
 
             let submitBtn = this.formUpdateEl.querySelector("[type=submit]");
@@ -25,16 +27,15 @@ class UserController{
             submitBtn.disabled = true;
 
             let userValues = this.getValues(this.formUpdateEl);
-            console.log(userValues)
             
-            let index = this.formUpdateEl.form.dataset.trIndex
+            let index = this.formUpdateEl.dataset.trIndex
 
             let tr =  this.tableEl.rows[index]
 
             tr.dataset.user = JSON.stringify(userValues)
-
+           
             tr.innerHTML = ` <tr>
-            <td><img src="${user.photo}" alt="User Image" class="img-circle img-sm"></td>
+            <td><img src="${userValues.photo}" alt="User Image" class="img-circle img-sm"></td>
             <td>${userValues.name}</td>
             <td>${userValues.email}</td>
             <td class="admin-state">${(userValues.admin)? "Sim" : "Não"}</td>
@@ -45,9 +46,13 @@ class UserController{
             </td>
             </tr>
             `;
-            //this.addEventsTr(tr)
 
-            this.updateCount(); }*/
+            tr.dataset.datauser = JSON.stringify(userValues);
+            this.showCadastratePanel();
+            submitBtn.disabled = false;
+            this.addEventsTr(tr);
+            this.updateCount(); 
+        })
 
 
         
@@ -220,7 +225,7 @@ class UserController{
 
 
     addLine(user){
-        
+    
         let tr = document.createElement("tr")
 
         tr.dataset.datauser = JSON.stringify(user)
@@ -242,44 +247,53 @@ class UserController{
            
         this.tableEl.appendChild(tr);
         this.updateCount();
+        this.addEventsTr(tr)
         
-        //adding the event of click in the edit btn user datas.     
-        tr.querySelector(".btn-edit").addEventListener("click", e =>{
-            console.log=("Oi")
-            // getting the values writted back showing in the edit user datas form.
-            let json = JSON.parse(tr.dataset.datauser);
-            let form = document.querySelector("#form-user-update");
-            //form.dataset.trIndex = tr.sectionRowIndex;
+    
+        }
+    
 
-            for (let key in json) {
-                let field = form.querySelector("[name =" + key.replace("_", "") + "]")
-           
-               if(field)   {
-               
-                   switch(field.type){
-                       case "file":
-                           continue;
-                           
-                       case "radio":
-                           field = form.querySelector("[name =" + key.replace("_", "")+ "][value=" + json[key] + "]")
-                           field.checked = true;
-                           break;
-                           
-                       case "checkbox":
-                           field.checked = json[key]
-                           break;
-               
-                       default:
-                           field.value = json[key];
-                       }}}})}
-
-
-
-    //addEventsTr(tr){
-        
-    //}
                         
+            
+    addEventsTr(tr){
+            //adding the event of click in the edit btn user datas.     
+            tr.querySelector(".btn-edit").addEventListener("click", e =>{
+            
+                // getting the values writted back showing in the edit user datas form.
+                let json = JSON.parse(tr.dataset.datauser);
+                let form = document.querySelector("#form-user-update");
+                form.dataset.trIndex = tr.sectionRowIndex;
+                                
+                
+                for (let key in json) {
+                    let field = form.querySelector("[name =" + key.replace("_", "") + "]")
+                    
+                    if(field)   {
+                        
+                        switch(field.type){
+                            case "file":
+                                continue;
+                                
+                           case "radio":
+                               field = form.querySelector("[name =" + key.replace("_", "")+ "][value=" + json[key] + "]")
+                               field.checked = true;
+                               break;
+                               
+                               case "checkbox":
+                                   field.checked = json[key]
+                                   break;
+                                   
+                                   default:
+                                       field.value = json[key];
+                    
+                                    }
+                                }}
+                                //showing the editpanel
+                this.showEditPanel();})
 
+    }   
+    
+    
     showCadastratePanel(){
 
         document.querySelector("#div-box-create").style.display = "block"
@@ -290,6 +304,6 @@ class UserController{
     showEditPanel(){
 
         document.querySelector("#div-box-create").style.display = "none"
-         document.querySelector("#div-box-update").style.display = "block"
+        document.querySelector("#div-box-update").style.display = "block"
     }
 }
