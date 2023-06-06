@@ -9,6 +9,7 @@ class UserController{
  
        this.onSubmit();
        this.onEdit();
+       this.selectAll();
 
     }
 
@@ -16,7 +17,6 @@ class UserController{
         document.querySelector("#div-box-update .btn-cancel").addEventListener("click", e=>{
             this.showCadastratePanel();
         })
-
 
         //working the submit btn after the datas edit, replacing for the new datas, recriating the HTML of the line with the new updates.
         this.formUpdateEl.addEventListener("submit", (btn)=>{
@@ -26,33 +26,65 @@ class UserController{
 
             submitBtn.disabled = true;
 
+
+            //basically these comands are getting the old and the new values of the Update and Create Form.
             let userValues = this.getValues(this.formUpdateEl);
             
             let index = this.formUpdateEl.dataset.trIndex
 
             let tr =  this.tableEl.rows[index]
 
-            tr.dataset.user = JSON.stringify(userValues)
-           
-            tr.innerHTML = ` <tr>
-            <td><img src="${userValues.photo}" alt="User Image" class="img-circle img-sm"></td>
-            <td>${userValues.name}</td>
-            <td>${userValues.email}</td>
-            <td class="admin-state">${(userValues.admin)? "Sim" : "Não"}</td>
-            <td>${usefullMethods.dateFormat(userValues.register)}</td>
-            <td>
-            <button type="button" class="btn btn-primary btn-xs  btn-flat btn-edit">Editar</button>
-            <button type="button" class="btn btn-danger btn-xs  btn-flat">Excluir</button>
-            </td>
-            </tr>
-            `;
+            let oldValues =  JSON.parse(tr.dataset.datauser)
 
-            tr.dataset.datauser = JSON.stringify(userValues);
-            this.showCadastratePanel();
-            submitBtn.disabled = false;
-            this.addEventsTr(tr);
-            this.updateCount(); 
-        })
+            let result = Object.assign({}, oldValues, userValues)
+
+          
+            // saving the photo
+            this.getPhoto(this.formUpdateEl).then(
+                (content)=>{
+
+                    if(!userValues.photo){ 
+                        result._photo = oldValues._photo;} 
+                    else{
+                        result._photo = content
+                    }
+                        
+                    //case the required camps wont be filled
+                    if(!userValues){
+                        console.error("Plese fill the required camps.")
+                        this.formEl.reset();
+                        return submitBtn.disabled = false;;
+                    }
+
+                    // recriating the HTML with the new updated line.
+                    tr.dataset.datauser = JSON.stringify(result);
+                    
+                    tr.innerHTML = ` <tr>
+                    <td><img src="${result._photo}" alt="User Image" class="img-circle img-sm"></td>
+                    <td>${result._name}</td>
+                    <td>${result._email}</td>
+                    <td class="admin-state">${(result._admin)? "Sim" : "Não"}</td>
+                    <td>${usefullMethods.dateFormat(result._register)}</td>
+                    <td>
+                    <button type="button" class="btn btn-primary btn-xs  btn-flat btn-edit">Editar</button>
+                    <button type="button" class="btn btn-danger btn-xs  btn-flat">Excluir</button>
+                    </td>
+                    </tr>
+                    `;
+                    
+                    //bringing back the cadastrate panel with the ready new values.
+                    this.addEventsTr(tr);
+                    this.updateCount(); 
+                    this.formUpdateEl.reset();
+                    submitBtn.disabled = false;
+                },
+
+                ()=>{
+                    console.error('Nothing was Sent.')
+
+                })
+
+                this.showCadastratePanel();})
 
 
         
@@ -72,7 +104,7 @@ class UserController{
             // values from the users 
             let userValues = this.getValues(this.formEl);
             //send photo
-            this.getPhoto().then(
+            this.getPhoto(this.formEl).then(
                 (content)=>{
                     
                     //case the required camps wont be filled
@@ -84,6 +116,8 @@ class UserController{
 
                     userValues.photo = content;
                     
+                    this.insertData(userValues)
+
                     this.addLine(userValues);
 
                     this.formEl.reset();
@@ -96,13 +130,13 @@ class UserController{
         })
     }
 
-    getPhoto(){
+    getPhoto(form){
 
         return new Promise((resolve, reject)=>{
 
             let userPhoto = new FileReader();
     
-            let photoEl = [...this.formEl.elements].filter(item =>{
+            let photoEl = [...form.elements].filter(item =>{
                 if (item.name === 'photo'){
                     return item;
                 }
@@ -146,7 +180,7 @@ class UserController{
         let isValid = true;
 
         [...formName.elements].forEach(function(field){
-
+            // checking if the required fields are filled.
             if(["name", "email", "password"].indexOf(field.name) > -1 && !(field.value)){
 
                 field.parentElement.classList.add("has-error")
@@ -223,11 +257,57 @@ class UserController{
 
     }
 
+    getUserStorage(){
+        let users = [];
+
+        if(sessionStorage.getItem("user")){
+
+            users = JSON.parse(sessionStorage.getItem("user"))
+
+        }
+
+        return users;
+
+    }
+
+    selectAll(){
+
+
+        let users = this.getUserStorage();
+
+        users.forEach(dataUser => {
+
+            let user = new User();
+
+            user.loadfromJSON(dataUser);
+            
+            this.addLine(user);
+
+        })
+        console.log(this.getUserStorage())
+        
+        
+    }
+
+
+    insertData(data){
+    
+        let users = this.getUserStorage();
+        
+        users.push(data);
+        
+        sessionStorage.setItem("user", JSON.stringify(users))
+        
+    }
+
 
     addLine(user){
     
         let tr = document.createElement("tr")
 
+       
+
+        //saving the first datas input, without updates.
         tr.dataset.datauser = JSON.stringify(user)
 
         tr.innerHTML = ` <tr>
@@ -238,7 +318,7 @@ class UserController{
             <td>${usefullMethods.dateFormat(user.register)}</td>
             <td>
             <button type="button" class="btn btn-primary btn-xs  btn-flat btn-edit">Editar</button>
-            <button type="button" class="btn btn-danger btn-xs  btn-flat">Excluir</button>
+            <button type="button" class="btn btn-danger btn-xs  btn-flat btn-exclude">Excluir</button>
             </td>
             </tr>
             `;
@@ -253,20 +333,17 @@ class UserController{
         }
     
 
-                        
-            
     addEventsTr(tr){
             //adding the event of click in the edit btn user datas.     
             tr.querySelector(".btn-edit").addEventListener("click", e =>{
             
                 // getting the values writted back showing in the edit user datas form.
                 let json = JSON.parse(tr.dataset.datauser);
-                let form = document.querySelector("#form-user-update");
-                form.dataset.trIndex = tr.sectionRowIndex;
+                this.formUpdateEl.dataset.trIndex = tr.sectionRowIndex;
                                 
                 
                 for (let key in json) {
-                    let field = form.querySelector("[name =" + key.replace("_", "") + "]")
+                    let field = this.formUpdateEl.querySelector("[name =" + key.replace("_", "") + "]")
                     
                     if(field)   {
                         
@@ -275,7 +352,7 @@ class UserController{
                                 continue;
                                 
                            case "radio":
-                               field = form.querySelector("[name =" + key.replace("_", "")+ "][value=" + json[key] + "]")
+                               field = this.formUpdateEl.querySelector("[name =" + key.replace("_", "")+ "][value=" + json[key] + "]")
                                field.checked = true;
                                break;
                                
@@ -288,8 +365,20 @@ class UserController{
                     
                                     }
                                 }}
-                                //showing the editpanel
+
+                this.formUpdateEl.querySelector(".photo").src = json._photo
+
+                //showing the editpanel
                 this.showEditPanel();})
+            //adding the event of click in the edit btn user datas.
+            tr.querySelector(".btn-exclude").addEventListener("click", e =>{
+
+                if(confirm("Deseja realmente excluir?")){
+                
+                    tr.remove()
+                    this.updateCount();
+                }
+        })
 
     }   
     

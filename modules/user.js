@@ -13,7 +13,7 @@ class User{
         this._admin = admin;
         this._register = new Date()
 
-
+    
 
     }       
 
@@ -93,6 +93,21 @@ class User{
         return this._admin = value;
     }
 
+    
+    
+    loadfromJSON(dataUserJson){
+    
+        for (let name in dataUserJson) {
+           
+            switch (name){
+                case "_register":
+                    this[name] = new Date(dataUserJson[name])
+                    break;
 
+                default:
+                    this[name] = dataUserJson[name];
+            }
+        }
+}
 
 }
