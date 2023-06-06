@@ -1,12 +1,56 @@
 //CONTROLLER, CONTROLA as regras de negocios/functions
 class UserController{
 
-    constructor(formId, tableId){
+    constructor(formIdCreate, formIdUpdate, tableId){
 
-       this.formEl = document.getElementById(formId);
+       this.formEl = document.getElementById(formIdCreate);
+       this.formUpdateEl = document.getElementById(formIdUpdate);
        this.tableEl = document.getElementById(tableId)
-
+ 
        this.onSubmit();
+       this.onEdit();
+
+    }
+
+    onEdit(){
+        document.querySelector("#div-box-update .btn-cancel").addEventListener("click", e=>{
+            this.showCadastratePanel();
+        })
+
+       /* this.formUpdateEl.addEventListener("submit", (btn)=>{
+            btn.preventDefault()
+
+            let submitBtn = this.formUpdateEl.querySelector("[type=submit]");
+
+            submitBtn.disabled = true;
+
+            let userValues = this.getValues(this.formUpdateEl);
+            console.log(userValues)
+            
+            let index = this.formUpdateEl.form.dataset.trIndex
+
+            let tr =  this.tableEl.rows[index]
+
+            tr.dataset.user = JSON.stringify(userValues)
+
+            tr.innerHTML = ` <tr>
+            <td><img src="${user.photo}" alt="User Image" class="img-circle img-sm"></td>
+            <td>${userValues.name}</td>
+            <td>${userValues.email}</td>
+            <td class="admin-state">${(userValues.admin)? "Sim" : "Não"}</td>
+            <td>${usefullMethods.dateFormat(userValues.register)}</td>
+            <td>
+            <button type="button" class="btn btn-primary btn-xs  btn-flat btn-edit">Editar</button>
+            <button type="button" class="btn btn-danger btn-xs  btn-flat">Excluir</button>
+            </td>
+            </tr>
+            `;
+            //this.addEventsTr(tr)
+
+            this.updateCount(); }*/
+
+
+        
 
     }
 
@@ -21,12 +65,12 @@ class UserController{
             submitBtn.disabled = true;
 
             // values from the users 
-            let userValues = this.getValues();
+            let userValues = this.getValues(this.formEl);
             //send photo
             this.getPhoto().then(
                 (content)=>{
                     
-                    //case the required camps wont pe filled
+                    //case the required camps wont be filled
                     if(!userValues){
                         console.error("Plese fill the required camps.")
                         this.formEl.reset();
@@ -63,6 +107,7 @@ class UserController{
             let file = photoEl[0].files[0]
 
             // call the right way of the promisse, throwing in the first fn from then().
+            // onload -> after uploading the photo.
             userPhoto.onload = ()=>{
                resolve(userPhoto.result)
          };
@@ -90,12 +135,12 @@ class UserController{
 
 
 
-    getValues(){
+    getValues(formName){
 
         let user = {};
         let isValid = true;
 
-        [...this.formEl.elements].forEach(function(field){
+        [...formName.elements].forEach(function(field){
 
             if(["name", "email", "password"].indexOf(field.name) > -1 && !(field.value)){
 
@@ -150,16 +195,26 @@ class UserController{
         
     }
 
+    //method that makes the count of the users registered like a user or admin, changing values in the screen, using dataSet.
     updateCount(){
         let numberUsers = 0;
         let numberAdmin = 0;
+        let user = 0;
 
         [...this.tableEl.children].forEach(tr =>{
 
             numberUsers++;
 
+            user = JSON.parse(tr.dataset.datauser)
 
+            if(user._admin) numberAdmin++;
         })
+        
+
+        document.querySelector("#number-users").innerHTML = numberUsers;
+        document.querySelector("#number-users-admin").innerHTML = numberAdmin;
+
+        
 
     }
 
@@ -168,6 +223,8 @@ class UserController{
         
         let tr = document.createElement("tr")
 
+        tr.dataset.datauser = JSON.stringify(user)
+
         tr.innerHTML = ` <tr>
             <td><img src="${user.photo}" alt="User Image" class="img-circle img-sm"></td>
             <td>${user.name}</td>
@@ -175,15 +232,64 @@ class UserController{
             <td class="admin-state">${(user.admin)? "Sim" : "Não"}</td>
             <td>${usefullMethods.dateFormat(user.register)}</td>
             <td>
-           <button type="button" class="btn btn-primary btn-xs  btn-flat">Editar</button>
-           <button type="button" class="btn btn-danger btn-xs  btn-flat">Excluir</button>
+            <button type="button" class="btn btn-primary btn-xs  btn-flat btn-edit">Editar</button>
+            <button type="button" class="btn btn-danger btn-xs  btn-flat">Excluir</button>
             </td>
-        </tr>
-        `;
-
+            </tr>
+            `;
+            
+            
+           
         this.tableEl.appendChild(tr);
+        this.updateCount();
+        
+        //adding the event of click in the edit btn user datas.     
+        tr.querySelector(".btn-edit").addEventListener("click", e =>{
+            console.log=("Oi")
+            // getting the values writted back showing in the edit user datas form.
+            let json = JSON.parse(tr.dataset.datauser);
+            let form = document.querySelector("#form-user-update");
+            //form.dataset.trIndex = tr.sectionRowIndex;
 
-        this.updateCount()
+            for (let key in json) {
+                let field = form.querySelector("[name =" + key.replace("_", "") + "]")
+           
+               if(field)   {
+               
+                   switch(field.type){
+                       case "file":
+                           continue;
+                           
+                       case "radio":
+                           field = form.querySelector("[name =" + key.replace("_", "")+ "][value=" + json[key] + "]")
+                           field.checked = true;
+                           break;
+                           
+                       case "checkbox":
+                           field.checked = json[key]
+                           break;
+               
+                       default:
+                           field.value = json[key];
+                       }}}})}
+
+
+
+    //addEventsTr(tr){
+        
+    //}
+                        
+
+    showCadastratePanel(){
+
+        document.querySelector("#div-box-create").style.display = "block"
+        document.querySelector("#div-box-update").style.display = "none"
+
     }
 
+    showEditPanel(){
+
+        document.querySelector("#div-box-create").style.display = "none"
+         document.querySelector("#div-box-update").style.display = "block"
+    }
 }
