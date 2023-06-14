@@ -3,6 +3,7 @@ class User{
     
     constructor(name, gender, birth, email, password, country, photo, admin){
 
+        this._id;
         this._name = name;
         this._gender = gender;
         this._birth = birth;
@@ -18,6 +19,10 @@ class User{
     }       
 
     //Getters Method to acess the private atributes
+
+    get id(){
+        return this._id
+    }
 
     get register(){
         return this._register;
@@ -109,5 +114,91 @@ class User{
             }
         }
 }
+
+    // get an array with the objects registered in the local storage.
+    static getUserStorage(){
+        let users = [];
+
+        if(localStorage.getItem("user")){
+
+            users = JSON.parse(localStorage.getItem("user"))
+
+        }
+        return users;
+    }
+
+    // get the ids of the objects, if not exists it creates one, returning then.
+    getNewID(){
+
+        let usersId = JSON.parse(localStorage.getItem('usersID'))
+        //if not exists will value 0, will sum 1 and set this id value in the LocStorage
+        if(!usersId > 0) usersId = 0;
+
+        usersId ++;
+
+        localStorage.setItem("usersID", usersId)
+
+        return usersId;
+
+
+    }
+
+    // save the line registered in the localstorage + insert in the array of users objects.
+    save(){
+    
+        let users = User.getUserStorage();
+       
+        //assigning id to the users object in the localstorage.
+        // if dont exists == first id
+        if(this.id > 0){
+
+            users.map(u=>{
+                //comparing the ids of the LOCAL STORAGE OBJECT and LINE HTML OBJECT.
+                if(u._id == this.id){
+                     Object.assign( u ,this)
+                }
+                return u;
+            })
+        } 
+        // if already exists == just assign the next.
+        else{
+            
+            this._id = this.getNewID();
+
+            users.push(this);
+            
+        }
+        localStorage.setItem("user", JSON.stringify(users))
+        
+        
+    }
+
+
+    // extrai a lista de array do LocStorage, procura quem foi excluido no HTML (foreach), remove do array e do LocStorage.
+    removeLine(tr){
+
+        let users = User.getUserStorage();
+        
+        users.splice(tr._id-1, 1)
+        console.log(users)
+
+
+        localStorage.setItem("user", JSON.stringify(users))
+
+        /*    
+        users.forEach(userData, index => {
+            console.log(this._id, userData)
+            
+        }); */
+    }
+
+
+
+
+
+
+
+
+
 
 }

@@ -18,7 +18,7 @@ class UserController{
             this.showCadastratePanel();
         })
 
-        //working the submit btn after the datas edit, replacing for the new datas, recriating the HTML of the line with the new updates.
+        //working the submit btn after the datas edit,  recriating the HTML of the line with the new datas updates.
         this.formUpdateEl.addEventListener("submit", (btn)=>{
             btn.preventDefault()
 
@@ -27,7 +27,7 @@ class UserController{
             submitBtn.disabled = true;
 
 
-            //basically these comands are getting the old and the new values of the Update and Create Form.
+            //basically these comands are getting the old and the new values of the Update and Create Form, bringing then together with object.assign in let result == object with the datas.
             let userValues = this.getValues(this.formUpdateEl);
             
             let index = this.formUpdateEl.dataset.trIndex
@@ -56,24 +56,17 @@ class UserController{
                         return submitBtn.disabled = false;;
                     }
 
+                    let user = new User()
+
+                    user.loadfromJSON(result)
+
+                    user.save()
+
                     // recriating the HTML with the new updated line.
-                    tr.dataset.datauser = JSON.stringify(result);
-                    
-                    tr.innerHTML = ` <tr>
-                    <td><img src="${result._photo}" alt="User Image" class="img-circle img-sm"></td>
-                    <td>${result._name}</td>
-                    <td>${result._email}</td>
-                    <td class="admin-state">${(result._admin)? "Sim" : "Não"}</td>
-                    <td>${usefullMethods.dateFormat(result._register)}</td>
-                    <td>
-                    <button type="button" class="btn btn-primary btn-xs  btn-flat btn-edit">Editar</button>
-                    <button type="button" class="btn btn-danger btn-xs  btn-flat">Excluir</button>
-                    </td>
-                    </tr>
-                    `;
+                    tr = this.getTr(user, tr)
                     
                     //bringing back the cadastrate panel with the ready new values.
-                    this.addEventsTr(tr);
+                    
                     this.updateCount(); 
                     this.formUpdateEl.reset();
                     submitBtn.disabled = false;
@@ -116,7 +109,7 @@ class UserController{
 
                     userValues.photo = content;
                     
-                    this.insertData(userValues)
+                    userValues.save();
 
                     this.addLine(userValues);
 
@@ -257,23 +250,10 @@ class UserController{
 
     }
 
-    getUserStorage(){
-        let users = [];
 
-        if(sessionStorage.getItem("user")){
-
-            users = JSON.parse(sessionStorage.getItem("user"))
-
-        }
-
-        return users;
-
-    }
-
+    //keep the line in the screen + reads the object as JSON.
     selectAll(){
-
-
-        let users = this.getUserStorage();
+        let users = User.getUserStorage();
 
         users.forEach(dataUser => {
 
@@ -284,53 +264,47 @@ class UserController{
             this.addLine(user);
 
         })
-        console.log(this.getUserStorage())
+        
         
         
     }
 
-
-    insertData(data){
-    
-        let users = this.getUserStorage();
-        
-        users.push(data);
-        
-        sessionStorage.setItem("user", JSON.stringify(users))
-        
-    }
 
 
     addLine(user){
+        
+        let tr = this.getTr(user)
+            
+        this.tableEl.appendChild(tr);
+        this.updateCount();
+         
+        
     
-        let tr = document.createElement("tr")
+        }
 
-       
+    // select the tr that will be created.
+    getTr(dataUser, tr = null){
 
-        //saving the first datas input, without updates.
-        tr.dataset.datauser = JSON.stringify(user)
+        if(tr===null) tr = document.createElement("tr");
+
+        //saving the datas input, be them create datas or inputs datas
+        tr.dataset.datauser = JSON.stringify(dataUser)
 
         tr.innerHTML = ` <tr>
-            <td><img src="${user.photo}" alt="User Image" class="img-circle img-sm"></td>
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-            <td class="admin-state">${(user.admin)? "Sim" : "Não"}</td>
-            <td>${usefullMethods.dateFormat(user.register)}</td>
+            <td><img src="${dataUser.photo}" alt="user Image" class="img-circle img-sm"></td>
+            <td>${dataUser.name}</td>
+            <td>${dataUser.email}</td>
+            <td class="admin-state">${(dataUser.admin)? "Sim" : "Não"}</td>
+            <td>${usefullMethods.dateFormat(dataUser.register)}</td>
             <td>
             <button type="button" class="btn btn-primary btn-xs  btn-flat btn-edit">Editar</button>
             <button type="button" class="btn btn-danger btn-xs  btn-flat btn-exclude">Excluir</button>
             </td>
             </tr>
             `;
-            
-            
-           
-        this.tableEl.appendChild(tr);
-        this.updateCount();
-        this.addEventsTr(tr)
-        
-    
-        }
+            this.addEventsTr(tr)
+            return tr;
+    }
     
 
     addEventsTr(tr){
@@ -370,13 +344,21 @@ class UserController{
 
                 //showing the editpanel
                 this.showEditPanel();})
-            //adding the event of click in the edit btn user datas.
+            
+            //adding the event of click in the exclude btn user datas.
             tr.querySelector(".btn-exclude").addEventListener("click", e =>{
 
                 if(confirm("Deseja realmente excluir?")){
+
+                    let user = new User();
+
+                    user.loadfromJSON(JSON.parse(tr.dataset.datauser))
+
+                    user.removeLine(JSON.parse(tr.dataset.datauser));
                 
                     tr.remove()
                     this.updateCount();
+                    
                 }
         })
 
