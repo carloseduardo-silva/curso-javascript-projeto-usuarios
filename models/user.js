@@ -174,22 +174,17 @@ class User{
     }
 
 
-    // extrai a lista de array do LocStorage, procura quem foi excluido no HTML (foreach), remove do array e do LocStorage.
+    // get the array user list from the localStorage, use the parameter "tr" to get his id and splice the right user value from the locstorage.
     removeLine(tr){
 
         let users = User.getUserStorage();
         
         users.splice(tr._id-1, 1)
-        console.log(users)
-
-
+        
+        //setting the new localstorage list without de exclude user.
         localStorage.setItem("user", JSON.stringify(users))
 
-        /*    
-        users.forEach(userData, index => {
-            console.log(this._id, userData)
-            
-        }); */
+   
     }
 
 
